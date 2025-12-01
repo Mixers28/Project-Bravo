@@ -69,7 +69,7 @@ So your workflow becomes consistent and reproducible.
 ### 1. Clone the template
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/local-mcp-context-kit
+git clone https://github.com/Mixers28/Project-Bravo
 cd local-mcp-context-kit
 
 (Or use “Use this template” on GitHub.)
