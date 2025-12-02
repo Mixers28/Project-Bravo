@@ -19,4 +19,4 @@ npm-debug.log*
 Thumbs.db
 
 #claude
-.claude
+.claude/
