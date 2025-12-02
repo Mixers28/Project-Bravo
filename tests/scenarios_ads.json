@@ -1,0 +1,32 @@
+[
+  {
+    "id": "ad-001",
+    "description": "Request to doubleclick ad script",
+    "url": "https://securepubads.g.doubleclick.net/tag/js/gpt.js",
+    "expectedOutcome": "blocked"
+  },
+  {
+    "id": "ad-002",
+    "description": "Request to googlesyndication ad",
+    "url": "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
+    "expectedOutcome": "blocked"
+  },
+  {
+    "id": "ad-003",
+    "description": "Request to generic /ads endpoint",
+    "url": "https://cdn.example.com/ads/banner.js?campaign=123",
+    "expectedOutcome": "blocked"
+  },
+  {
+    "id": "ad-004",
+    "description": "Normal script from same site, no ads-like pattern",
+    "url": "https://static.example.com/js/app.js",
+    "expectedOutcome": "allowed"
+  },
+  {
+    "id": "ad-005",
+    "description": "Image from example.com, not obviously an ad",
+    "url": "https://example.com/images/logo.png",
+    "expectedOutcome": "allowed"
+  }
+]

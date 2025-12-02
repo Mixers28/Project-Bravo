@@ -6,20 +6,20 @@
 <!-- SUMMARY_START -->
 **Summary (auto-maintained by Agent):**
 
-**CookieSentinel** - A Chrome MV3 extension that blocks marketing and tracking cookies.
+**CookieSentinel** - A Chrome MV3 / firefox MV2 extension that blocks marketing/tracking cookies, auto-rejects CMP prompts, and now ships baseline ad blocking.
 
 **Architecture:**
-- declarativeNetRequest rules block known tracker domains (doubleclick, GA, GTM, Facebook pixel)
-- Background service worker monitors cookies.onChanged and removes marketing cookies in real-time
-- Multi-layered detection: known trackers list, custom user domains, name-based heuristics (_ga, _fbp, etc.)
-- Periodic cleanup via alarms API (hourly scan)
-- Chrome sync storage for settings and stats
+- declarativeNetRequest rules + ads_rules block tracker/ad domains (DoubleClick, Taboola, Outbrain, /ads paths)
+- Background service worker monitors cookies.onChanged, removes marketing cookies in real-time, and updates stats
+- Multi-layered detection: CookieDatabase-driven tracker list, custom user domains, name-based heuristics (_ga, _fbp, etc.)
+- CMP auto-reject content script clicks "Reject all" prompts (OneTrust, Quantcast, TrustArc, etc.)
+- Periodic cleanup via alarms API (hourly scan) with Chrome sync storage for settings + stats
 
 **UI Components:**
-- Popup: toggle protection, manual "Clean now" button, blocked cookie stats
+- Popup: global toggle, per-site whitelist toggle/status, manual "Clean now" button, blocked cookie stats
 - Options page: whitelist management, custom tracker domains
 
-**Current Status:** v1.0 complete - all core components implemented and ready for local testing
+**Current Status:** v1.0 complete - cross-browser cookie blocking, CMP auto-reject, and baseline ad blocking implemented; test matrix + evidence capture underway
 <!-- SUMMARY_END -->
 
 ---
@@ -84,6 +84,8 @@
 
 Use this section for **big decisions** only:
 
-- `2025-12-01` – Completed v1.0 implementation: manifest, background service worker, DNR rules, popup/options UI, and icon assets
-- `2025-12-01` – Created automated icon generation script using PowerShell + .NET System.Drawing
-- `2025-12-01` – Confirmed Chrome MV3 architecture with dual-strategy blocking (DNR + cookies API)
+- `2025-12-01` - Completed v1.0 implementation: manifest, background service worker, DNR rules, popup/options UI, and icon assets
+- `2025-12-01` - Created automated icon generation script using PowerShell + .NET System.Drawing
+- `2025-12-01` - Confirmed Chrome MV3 architecture with dual-strategy blocking (DNR + cookies API)
+- `2025-12-02` - Integrated CookieDatabase-sourced tracker data workflow (scripted ingestion + expanded ruleset)
+- `2025-12-02` - Added CMP auto-reject content scripts, Chrome ads_rules + Firefox webRequest ad blocking, and per-site whitelist controls in the popup

@@ -21,6 +21,18 @@
     "default_popup": "popup.html",
     "default_title": "CookieSentinel"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/autoReject.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
   "options_page": "options.html",
   "icons": {
     "16": "icons/icon16.png",
@@ -34,6 +46,11 @@
         "id": "ruleset_1",
         "enabled": true,
         "path": "ruleset_1.json"
+      },
+      {
+        "id": "ads_rules",
+        "enabled": true,
+        "path": "ads_rules.json"
       }
     ]
   }

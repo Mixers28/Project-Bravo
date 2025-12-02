@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1001,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "/ads",
+      "resourceTypes": [
+        "xmlhttprequest",
+        "script",
+        "image",
+        "sub_frame"
+      ]
+    }
+  }
+]

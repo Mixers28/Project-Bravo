@@ -22,6 +22,18 @@
     "default_title": "CookieSentinel",
     "default_popup": "popup.html"
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content/autoReject.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
   "options_ui": {
     "page": "options.html",
     "browser_style": true
@@ -30,6 +42,8 @@
     "cookies",
     "storage",
     "alarms",
-    "<all_urls>"
+    "<all_urls>",
+    "webRequest",
+    "webRequestBlocking"
   ]
 }

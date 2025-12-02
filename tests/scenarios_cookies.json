@@ -1,0 +1,104 @@
+[
+  {
+    "id": "cookie-001",
+    "description": "GA cookie on non-whitelisted domain",
+    "cookie": {
+      "name": "_ga",
+      "domain": ".example.com",
+      "path": "/",
+      "secure": true,
+      "storeId": "0"
+    },
+    "settings": {
+      "enabled": true,
+      "whitelist": [],
+      "customTrackers": []
+    },
+    "expectedOutcome": "deleted"
+  },
+  {
+    "id": "cookie-002",
+    "description": "FBP cookie on whitelisted domain",
+    "cookie": {
+      "name": "_fbp",
+      "domain": ".example.com",
+      "path": "/",
+      "secure": true,
+      "storeId": "0"
+    },
+    "settings": {
+      "enabled": true,
+      "whitelist": ["example.com"],
+      "customTrackers": []
+    },
+    "expectedOutcome": "kept"
+  },
+  {
+    "id": "cookie-003",
+    "description": "Google Analytics cookie from known tracker domain",
+    "cookie": {
+      "name": "_ga",
+      "domain": ".google-analytics.com",
+      "path": "/",
+      "secure": true,
+      "storeId": "0"
+    },
+    "settings": {
+      "enabled": true,
+      "whitelist": [],
+      "customTrackers": []
+    },
+    "expectedOutcome": "deleted"
+  },
+  {
+    "id": "cookie-004",
+    "description": "Custom tracker domain specified in settings",
+    "cookie": {
+      "name": "sessionid",
+      "domain": ".tracking.example.net",
+      "path": "/",
+      "secure": true,
+      "storeId": "0"
+    },
+    "settings": {
+      "enabled": true,
+      "whitelist": [],
+      "customTrackers": ["tracking.example.net"]
+    },
+    "expectedOutcome": "deleted"
+  },
+  {
+    "id": "cookie-005",
+    "description": "Functional cookie on normal site",
+    "cookie": {
+      "name": "sessionid",
+      "domain": ".example.com",
+      "path": "/",
+      "secure": true,
+      "storeId": "0"
+    },
+    "settings": {
+      "enabled": true,
+      "whitelist": [],
+      "customTrackers": []
+    },
+    "expectedOutcome": "kept"
+  },
+  {
+    "id": "cookie-006",
+    "description": "Tracking cookie but global protection disabled",
+    "cookie": {
+      "name": "_ga",
+      "domain": ".example.com",
+      "path": "/",
+      "secure": true,
+      "storeId": "0"
+    },
+    "settings": {
+      "enabled": false,
+      "whitelist": [],
+      "customTrackers": []
+    },
+    "expectedOutcome": "kept"
+  }
+]

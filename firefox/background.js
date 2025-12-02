@@ -1,5 +1,65 @@
 // background.js (MV3 service worker)
 
+const FALLBACK_TRACKER_DOMAINS = [
+  "doubleclick.net",
+  "googletagmanager.com",
+  "google-analytics.com",
+  "ads.twitter.com",
+  "facebook.com",
+  "facebook.net",
+  "scorecardresearch.com",
+  "quantserve.com"
+];
+
+const FALLBACK_TRACKING_NAMES = [
+  "_ga", "_gid", "_fbp",
+  "fr", "ajs_anonymous_id", "ajs_user_id",
+  "_hj", "hubspotutk", "mkto_", "optimizely"
+];
+
+let trackerData = {
+  domains: FALLBACK_TRACKER_DOMAINS.map(d => d.toLowerCase()),
+  cookieNames: FALLBACK_TRACKING_NAMES.map(n => n.toLowerCase())
+};
+
+const AD_HOST_KEYWORDS = [
+  "doubleclick.net",
+  "googlesyndication.com",
+  "g.doubleclick.net",
+  "adservice.google.com",
+  "ads.yahoo.com",
+  "ads.twitter.com"
+];
+
+function shouldBlockAdRequest(urlString) {
+  try {
+    const url = new URL(urlString);
+    const host = url.hostname.toLowerCase();
+    if (AD_HOST_KEYWORDS.some(keyword => host === keyword || host.endsWith(`.${keyword}`))) {
+      return true;
+    }
+    const path = (url.pathname || "").toLowerCase();
+    return path.includes("/ads");
+  } catch (err) {
+    return false;
+  }
+}
+
+(async () => {
+  try {
+    const resp = await fetch(chrome.runtime.getURL("tracker-data.json"));
+    const json = await resp.json();
+    if (json?.domains?.length) {
+      trackerData.domains = json.domains.map(d => d.toLowerCase());
+    }
+    if (json?.cookieNames?.length) {
+      trackerData.cookieNames = json.cookieNames.map(n => n.toLowerCase());
+    }
+  } catch (err) {
+    console.warn("Failed to load tracker-data.json, using fallback lists.", err);
+  }
+})();
+
 const DEFAULT_SETTINGS = {
   enabled: true,
   whitelist: [],                // list of hostnames
@@ -38,18 +98,7 @@ function isMarketingCookie(cookie, settings) {
   // We can't always know the tab's domain from here, but:
   // - Third-party cookies often have a domain not matching the page.
   // - For simplicity we treat known tracker domains + customTrackers as "marketing".
-  const KNOWN_TRACKERS = [
-    "doubleclick.net",
-    "googletagmanager.com",
-    "google-analytics.com",
-    "ads.twitter.com",
-    "facebook.com",
-    "facebook.net",
-    "scorecardresearch.com",
-    "quantserve.com"
-  ];
-
-  if (KNOWN_TRACKERS.some(t => host === t || host.endsWith(`.${t}`))) {
+  if (trackerData.domains.some(t => host === t || host.endsWith(`.${t}`))) {
     return true;
   }
 
@@ -59,13 +108,7 @@ function isMarketingCookie(cookie, settings) {
 
   // Name-based heuristic (common marketing cookie names)
   const name = cookie.name.toLowerCase();
-  const trackingNames = [
-    "_ga", "_gid", "_fbp",
-    "fr", "ajs_anonymous_id", "ajs_user_id",
-    "_hj", "hubspotutk", "mkto_", "optimizely"
-  ];
-
-  if (trackingNames.some(n => name.startsWith(n))) {
+  if (trackerData.cookieNames.some(n => name.startsWith(n))) {
     return true;
   }
 
@@ -149,3 +192,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     cleanAllMarketingCookies();
   }
 });
+
+if (chrome.webRequest && chrome.webRequest.onBeforeRequest) {
+  chrome.webRequest.onBeforeRequest.addListener(
+    (details) => {
+      if (shouldBlockAdRequest(details.url)) {
+        return { cancel: true };
+      }
+      return {};
+    },
+    { urls: ["<all_urls>"] },
+    ["blocking"]
+  );
+}
