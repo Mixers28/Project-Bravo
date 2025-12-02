@@ -6,10 +6,10 @@
 <!-- SUMMARY_START -->
 **Current Focus (auto-maintained by Agent):**
 - Finish the cross-browser testing matrix + evidence (cookies + ads + CMP rejection)
+- Regression-test the refactored background settings/cache logic on both browsers
 - Validate auto-reject consent flow and per-site whitelist controls in the popup
 - Harden ad-blocking rules and document the results
-- Design professional icons to replace placeholders
-- Prepare Chrome Web Store listing materials
+- Prepare Chrome Web Store listing materials + icon refresh
 <!-- SUMMARY_END -->
 
 ---
@@ -49,10 +49,10 @@ All core extension components delivered:
 
 **Immediate Next Steps:**
 1. Finish the testing matrix for both browsers (cookies + ads + CMP auto-reject) and log evidence in docs/TESTING_REPORT.md
-2. Capture popup screenshots, logs, and blocked-cookie stats for the matrix sites
+2. Regression-test the optimized background scripts (settings cache, stats updates) and capture logs for any edge cases
 3. Verify stats tracking, Clean now, and the updated per-site whitelist toggle across Chrome/Firefox
 4. Exercise whitelist/custom tracker flows plus the new auto-reject script to confirm no regressions
-5. Prep draft assets (icons, store copy outline) so marketing deliverables can start immediately after testing
+5. Capture popup screenshots, blocked-cookie stats, and start prepping icon + store copy assets for marketing deliverables
 
 **Backlog:**
 - Expand ruleset_1.json to 15-20 major trackers (hotjar, mixpanel, segment, etc.)

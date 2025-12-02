@@ -1,4 +1,4 @@
-// background.js (MV3 service worker)
+// background.js (Firefox MV2 background script)
 
 const FALLBACK_TRACKER_DOMAINS = [
   "doubleclick.net",
@@ -34,7 +34,7 @@ const AD_HOST_KEYWORDS = [
 function shouldBlockAdRequest(urlString) {
   try {
     const url = new URL(urlString);
-    const host = url.hostname.toLowerCase();
+    const host = (url.hostname || "").toLowerCase();
     if (AD_HOST_KEYWORDS.some(keyword => host === keyword || host.endsWith(`.${keyword}`))) {
       return true;
     }
@@ -62,25 +62,101 @@ function shouldBlockAdRequest(urlString) {
 
 const DEFAULT_SETTINGS = {
   enabled: true,
-  whitelist: [],                // list of hostnames
-  customTrackers: [],           // list of tracker domain substrings, e.g. ["hotjar.com"]
+  whitelist: [],
+  customTrackers: [],
   stats: {
     blockedCookies: 0,
     lastClean: null
   }
 };
 
-async function getSettings() {
-  return new Promise(resolve => {
-    chrome.storage.sync.get(DEFAULT_SETTINGS, items => resolve(items));
+let settingsCache = null;
+let settingsLoadPromise = null;
+
+function normalizeSettings(raw = {}) {
+  const merged = {
+    ...DEFAULT_SETTINGS,
+    ...raw,
+    whitelist: Array.isArray(raw.whitelist) ? raw.whitelist : DEFAULT_SETTINGS.whitelist,
+    customTrackers: Array.isArray(raw.customTrackers) ? raw.customTrackers : DEFAULT_SETTINGS.customTrackers,
+    stats: {
+      ...DEFAULT_SETTINGS.stats,
+      ...(raw.stats || {})
+    }
+  };
+
+  return {
+    ...merged,
+    whitelist: [...merged.whitelist],
+    customTrackers: [...merged.customTrackers],
+    stats: { ...merged.stats }
+  };
+}
+
+function cloneSettings(settings) {
+  return {
+    ...settings,
+    whitelist: [...settings.whitelist],
+    customTrackers: [...settings.customTrackers],
+    stats: { ...settings.stats }
+  };
+}
+
+function storageGet(defaults) {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(defaults, (items) => resolve(items));
   });
 }
 
-async function saveSettings(settings) {
-  return new Promise(resolve => {
-    chrome.storage.sync.set(settings, () => resolve());
+function storageSet(value) {
+  return new Promise((resolve) => {
+    chrome.storage.sync.set(value, () => resolve());
   });
 }
+
+async function fetchSettingsFromStorage() {
+  const raw = await storageGet(DEFAULT_SETTINGS);
+  return normalizeSettings(raw);
+}
+
+async function getSettings(forceReload = false) {
+  if (forceReload) {
+    settingsCache = null;
+  }
+  if (settingsCache) {
+    return settingsCache;
+  }
+  if (!settingsLoadPromise) {
+    settingsLoadPromise = fetchSettingsFromStorage();
+  }
+  settingsCache = await settingsLoadPromise;
+  settingsLoadPromise = null;
+  return settingsCache;
+}
+
+async function updateSettings(updater) {
+  const current = await getSettings();
+  const draft = cloneSettings(current);
+  const candidate =
+    typeof updater === "function" ? updater(draft) || draft : { ...current, ...updater };
+  const next = normalizeSettings(candidate);
+  await storageSet(next);
+  settingsCache = next;
+  return next;
+}
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "sync" || !settingsCache) return;
+  const next = { ...settingsCache };
+  Object.entries(changes).forEach(([key, change]) => {
+    if (typeof change.newValue === "undefined") {
+      delete next[key];
+    } else {
+      next[key] = change.newValue;
+    }
+  });
+  settingsCache = normalizeSettings(next);
+});
 
 // Check if a cookie is "marketing/tracking"-ish
 function isMarketingCookie(cookie, settings) {
@@ -102,7 +178,7 @@ function isMarketingCookie(cookie, settings) {
     return true;
   }
 
-  if (customTrackers.some(t => host.includes(t.toLowerCase()))) {
+  if (customTrackers.some(t => t && host.includes(t.toLowerCase()))) {
     return true;
   }
 
@@ -117,7 +193,7 @@ function isMarketingCookie(cookie, settings) {
 }
 
 // Remove a cookie and bump stats
-async function deleteCookie(cookie, settings) {
+async function deleteCookie(cookie) {
   const removalDetails = {
     name: cookie.name,
     storeId: cookie.storeId,
@@ -125,11 +201,11 @@ async function deleteCookie(cookie, settings) {
                          `http://${cookie.domain.replace(/^\./, "")}${cookie.path}`
   };
 
-  await chrome.cookies.remove(removalDetails);
-
-  const newSettings = await getSettings();
-  newSettings.stats.blockedCookies = (newSettings.stats.blockedCookies || 0) + 1;
-  await saveSettings(newSettings);
+  await new Promise((resolve) => chrome.cookies.remove(removalDetails, resolve));
+  await updateSettings((current) => {
+    current.stats.blockedCookies = (current.stats.blockedCookies || 0) + 1;
+    return current;
+  });
 }
 
 // Listen for new/changed cookies
@@ -141,7 +217,7 @@ chrome.cookies.onChanged.addListener(async (changeInfo) => {
   if (removed) return; // we don't care about deletions
 
   if (isMarketingCookie(cookie, settings)) {
-    await deleteCookie(cookie, settings);
+    await deleteCookie(cookie);
   }
 });
 
@@ -150,15 +226,16 @@ async function cleanAllMarketingCookies() {
   const settings = await getSettings();
   if (!settings.enabled) return;
 
-  chrome.cookies.getAll({}, async (cookies) => {
-    for (const cookie of cookies) {
-      if (isMarketingCookie(cookie, settings)) {
-        await deleteCookie(cookie, settings);
-      }
+  const cookies = await new Promise((resolve) => chrome.cookies.getAll({}, resolve));
+  for (const cookie of cookies) {
+    if (isMarketingCookie(cookie, settings)) {
+      await deleteCookie(cookie);
     }
-    const s = await getSettings();
-    s.stats.lastClean = new Date().toISOString();
-    await saveSettings(s);
+  }
+
+  await updateSettings((current) => {
+    current.stats.lastClean = new Date().toISOString();
+    return current;
   });
 }
 
@@ -168,9 +245,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "getSettings") {
       sendResponse(await getSettings());
     } else if (message.type === "setSettings") {
-      const current = await getSettings();
-      const updated = { ...current, ...message.payload };
-      await saveSettings(updated);
+      const updated = await updateSettings(message.payload || {});
       sendResponse(updated);
     } else if (message.type === "cleanNow") {
       await cleanAllMarketingCookies();

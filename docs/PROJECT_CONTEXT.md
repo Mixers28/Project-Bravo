@@ -6,11 +6,11 @@
 <!-- SUMMARY_START -->
 **Summary (auto-maintained by Agent):**
 
-**CookieSentinel** - A Chrome MV3 / firefox MV2 extension that blocks marketing/tracking cookies, auto-rejects CMP prompts, and now ships baseline ad blocking.
+**CookieSentinel** - A Chrome MV3 / firefox MV2 extension that blocks marketing/tracking cookies, auto-rejects CMP prompts, and now ships baseline ad blocking with optimized background performance.
 
 **Architecture:**
 - declarativeNetRequest rules + ads_rules block tracker/ad domains (DoubleClick, Taboola, Outbrain, /ads paths)
-- Background service worker monitors cookies.onChanged, removes marketing cookies in real-time, and updates stats
+- Background service worker now caches settings, removes marketing cookies in real-time, and updates stats without repeated storage hits
 - Multi-layered detection: CookieDatabase-driven tracker list, custom user domains, name-based heuristics (_ga, _fbp, etc.)
 - CMP auto-reject content script clicks "Reject all" prompts (OneTrust, Quantcast, TrustArc, etc.)
 - Periodic cleanup via alarms API (hourly scan) with Chrome sync storage for settings + stats
@@ -19,7 +19,7 @@
 - Popup: global toggle, per-site whitelist toggle/status, manual "Clean now" button, blocked cookie stats
 - Options page: whitelist management, custom tracker domains
 
-**Current Status:** v1.0 complete - cross-browser cookie blocking, CMP auto-reject, and baseline ad blocking implemented; test matrix + evidence capture underway
+**Current Status:** v1.0 complete - cross-browser cookie blocking, CMP auto-reject, baseline ad blocking, and refactored background settings/cache handling implemented; test matrix + evidence capture underway
 <!-- SUMMARY_END -->
 
 ---
@@ -89,3 +89,4 @@ Use this section for **big decisions** only:
 - `2025-12-01` - Confirmed Chrome MV3 architecture with dual-strategy blocking (DNR + cookies API)
 - `2025-12-02` - Integrated CookieDatabase-sourced tracker data workflow (scripted ingestion + expanded ruleset)
 - `2025-12-02` - Added CMP auto-reject content scripts, Chrome ads_rules + Firefox webRequest ad blocking, and per-site whitelist controls in the popup
+- `2025-12-02` - Refactored background settings/cache logic across Chrome + Firefox for faster cookie processing and consistent stat updates

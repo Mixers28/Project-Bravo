@@ -37,6 +37,28 @@
 ## Session Template (Copy/Paste for each new session)
 ## Recent Sessions (last 3-5)
 
+### 2025-12-02 (Session 9 - Background Refactor & Perf)
+
+**Participants:** User, Codex Agent  
+**Branch:** main  
+
+### What we worked on
+- Refactored Chrome + Firefox background scripts to use cached settings, normalized storage operations, and consistent stat updates.
+- Wrapped cookie + storage APIs in promise helpers and centralized delete/cleanup flows for reliability.
+- Updated PROJECT_CONTEXT/NOW to capture the new architectural details and immediate regression-testing focus.
+
+### Files touched
+- Chrome/background.js
+- firefox/background.js
+- docs/PROJECT_CONTEXT.md
+- docs/NOW.md
+- docs/SESSION_NOTES.md (this entry)
+
+### Outcomes / Decisions
+- Cookie deletions now reuse cached settings and update stats without repeated storage reads, improving performance.
+- Shared logic between MV3 and MV2 builds keeps behavior aligned across browsers.
+- Next step is executing the regression matrix to validate the refactor before moving on to marketing assets.
+
 ### 2025-12-02 (Session 8 - Ad Blocking + Popup Controls)
 
 **Participants:** User, Codex Agent  
